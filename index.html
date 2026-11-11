@@ -117,7 +117,6 @@ csel.addEventListener('change',()=>loadProfile(csel.value));document.getElementB
 window.addEventListener('resize',()=>{if(currentData.UKR)drawChart('overviewChart',currentData.UKR[selectedIndicator()]||[]);if(currentData[csel.value])drawChart('countryChart',currentData[csel.value][document.getElementById('countryIndicator').value]||[])});
 refreshAll();
 </script>
-<script type="module">
 
 <script type="module">
 import {
