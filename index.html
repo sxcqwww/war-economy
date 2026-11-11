@@ -118,12 +118,9 @@ window.addEventListener('resize',()=>{if(currentData.UKR)drawChart('overviewChar
 refreshAll();
 </script>
 
+
 <script type="module">
-import {
-  initializeApp,
-  getApps,
-  getApp
-} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 
 import {
   getDatabase,
@@ -145,45 +142,30 @@ const countEl = document.getElementById('liveCount');
 const wrapEl = document.getElementById('liveCountWrap');
 
 try {
-  const app = getApps().length
-    ? getApp()
-    : initializeApp(firebaseConfig);
-
+  const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
   const connectedRef = ref(db, '.info/connected');
   const presenceRoot = ref(db, 'presence');
-
   const sessionId = crypto.randomUUID();
   const myPresence = ref(db, `presence/${sessionId}`);
 
-  // Слушаем количество посетителей
   onValue(presenceRoot, snapshot => {
     const data = snapshot.val();
-    const count = data ? Object.keys(data).length : 0;
-
-    countEl.textContent = count;
+    countEl.textContent = data ? Object.keys(data).length : 0;
     wrapEl.classList.remove('offline');
-
-    console.log('ONLINE VISITORS:', count);
   }, error => {
     countEl.textContent = 'н/д';
     wrapEl.classList.add('offline');
     console.error('Presence read error:', error);
   });
 
-  // Отслеживаем подключение и отключение
   onValue(connectedRef, async snapshot => {
     if (snapshot.val() === true) {
       try {
         await onDisconnect(myPresence).remove();
-
-        await set(myPresence, {
-          connectedAt: Date.now()
-        });
-
-        console.log('VISITOR REGISTERED:', sessionId);
-
+        await set(myPresence, { connectedAt: Date.now() });
+        console.log('VISITOR REGISTERED');
       } catch (error) {
         console.error('Presence registration error:', error);
       }
@@ -198,5 +180,4 @@ try {
   console.error('Firebase initialization error:', error);
 }
 </script>
-</body>
-</html>
+
