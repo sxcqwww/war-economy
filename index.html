@@ -149,10 +149,18 @@ if (configured) {
         } catch (error) { console.warn('Presence registration failed:', error); }
       }
     });
-    onValue(presenceRoot, snapshot => {
-      countEl.textContent = snapshot.exists() ? snapshot.numChildren() : '0';
-      wrapEl.classList.remove('offline');
-    }, error => {
+onValue(presenceRoot, snapshot => {
+  const visitors = snapshot.val();
+  countEl.textContent = visitors && typeof visitors === 'object'
+    ? Object.keys(visitors).length
+    : '0';
+
+  wrapEl.classList.remove('offline');
+}, error => {
+  countEl.textContent = 'н/д';
+  wrapEl.classList.add('offline');
+  console.warn('Presence count unavailable:', error);
+});
       countEl.textContent = 'н/д';
       wrapEl.classList.add('offline');
       console.warn('Presence count unavailable:', error);
