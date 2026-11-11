@@ -118,7 +118,22 @@ window.addEventListener('resize',()=>{if(currentData.UKR)drawChart('overviewChar
 refreshAll();
 </script>
 <script type="module">
-// WAR ECONOMY live visitors. Add your Firebase web config below after creating a project.
+
+<script type="module">
+import {
+  initializeApp,
+  getApps,
+  getApp
+} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+
+import {
+  getDatabase,
+  ref,
+  onValue,
+  onDisconnect,
+  set
+} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
+
 const firebaseConfig = {
   apiKey: "AIzaSyBqugZ6LYoKDydzflZZBJ9Xqk-4H7lOUTE",
   authDomain: "sxcq-9ce5f.firebaseapp.com",
@@ -127,20 +142,14 @@ const firebaseConfig = {
   appId: "1:1081931172809:web:28ecd93c32107fdd633618"
 };
 
-console.log('WAR ECONOMY COUNTER SCRIPT STARTED');
-  console.log('BEFORE FIREBASE IMPORT');
-  const countEl = document.getElementById('liveCount');
+const countEl = document.getElementById('liveCount');
 const wrapEl = document.getElementById('liveCountWrap');
 
 try {
-  const [{ initializeApp }, {
-    getDatabase, ref, onValue, onDisconnect, set, remove
-  }] = await Promise.all([
-    import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js'),
-    import('https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js')
-  ]);
-console.log('FIREBASE IMPORT SUCCESS');
-  const app = initializeApp(firebaseConfig);
+  const app = getApps().length
+    ? getApp()
+    : initializeApp(firebaseConfig);
+
   const db = getDatabase(app);
 
   const connectedRef = ref(db, '.info/connected');
@@ -149,40 +158,46 @@ console.log('FIREBASE IMPORT SUCCESS');
   const sessionId = crypto.randomUUID();
   const myPresence = ref(db, `presence/${sessionId}`);
 
+  // Слушаем количество посетителей
+  onValue(presenceRoot, snapshot => {
+    const data = snapshot.val();
+    const count = data ? Object.keys(data).length : 0;
+
+    countEl.textContent = count;
+    wrapEl.classList.remove('offline');
+
+    console.log('ONLINE VISITORS:', count);
+  }, error => {
+    countEl.textContent = 'н/д';
+    wrapEl.classList.add('offline');
+    console.error('Presence read error:', error);
+  });
+
+  // Отслеживаем подключение и отключение
   onValue(connectedRef, async snapshot => {
     if (snapshot.val() === true) {
       try {
         await onDisconnect(myPresence).remove();
-        await set(myPresence, Date.now());
+
+        await set(myPresence, {
+          connectedAt: Date.now()
+        });
+
+        console.log('VISITOR REGISTERED:', sessionId);
+
       } catch (error) {
-        console.error('Presence registration:', error);
+        console.error('Presence registration error:', error);
       }
     }
   });
 
-onValue(presenceRoot, snapshot => {
-  console.log('FIREBASE DATA:', snapshot.val());
-  console.log('COUNT ELEMENT:', countEl);
-  console.log('WRAP ELEMENT:', wrapEl);
-
-  const data = snapshot.val();
-  const count = data ? Object.keys(data).length : 0;
-
-  console.log('VISITORS COUNT:', count);
-
-  countEl.textContent = count;
-  wrapEl.classList.remove('offline');
-  }, error => {
-    countEl.textContent = 'н/д';
-    wrapEl.classList.add('offline');
-    console.error(error);
-  });
-
-  window.addEventListener('pagehide', () => {
-    remove(myPresence).catch(() => {});
-  });
+  console.log('WAR ECONOMY COUNTER INITIALIZED');
 
 } catch (error) {
   countEl.textContent = 'н/д';
-  console.error('Firebase error:', error);
+  wrapEl.classList.add('offline');
+  console.error('Firebase initialization error:', error);
 }
+</script>
+</body>
+</html>
