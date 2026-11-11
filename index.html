@@ -158,12 +158,18 @@ try {
     }
   });
 
-  onValue(presenceRoot, snapshot => {
-    const data = snapshot.val();
-    const count = data ? Object.keys(data).length : 0;
+onValue(presenceRoot, snapshot => {
+  console.log('FIREBASE DATA:', snapshot.val());
+  console.log('COUNT ELEMENT:', countEl);
+  console.log('WRAP ELEMENT:', wrapEl);
 
-    countEl.textContent = count;
-    wrapEl.classList.remove('offline');
+  const data = snapshot.val();
+  const count = data ? Object.keys(data).length : 0;
+
+  console.log('VISITORS COUNT:', count);
+
+  countEl.textContent = count;
+  wrapEl.classList.remove('offline');
   }, error => {
     countEl.textContent = 'н/д';
     wrapEl.classList.add('offline');
