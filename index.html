@@ -126,51 +126,55 @@ const firebaseConfig = {
   projectId: "sxcq-9ce5f",
   appId: "1:1081931172809:web:28ecd93c32107fdd633618"
 };
+
 const countEl = document.getElementById('liveCount');
 const wrapEl = document.getElementById('liveCountWrap');
-const configured = Object.values(firebaseConfig).every(v => typeof v === 'string' && v.length > 0 && !v.includes('YOUR_'));
-if (configured) {
-  try {
-    const [{ initializeApp }, { getDatabase, ref, onValue, onDisconnect, set, remove, serverTimestamp }] = await Promise.all([
-      import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js'),
-      import('https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js')
-    ]);
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const connectedRef = ref(db, '.info/connected');
-    const presenceRoot = ref(db, 'presence');
-    const sessionId = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
-    const myPresence = ref(db, `presence/${sessionId}`);
-    onValue(connectedRef, async snapshot => {
-      if (snapshot.val() === true) {
-        try {
-          await onDisconnect(myPresence).remove();
-          await set(myPresence, { connectedAt: serverTimestamp() });
-        } catch (error) { console.warn('Presence registration failed:', error); }
-      }
-    });
-onValue(presenceRoot, snapshot => {
-  const visitors = snapshot.val();
-  countEl.textContent = visitors && typeof visitors === 'object'
-    ? Object.keys(visitors).length
-    : '0';
 
-  wrapEl.classList.remove('offline');
-}, error => {
-  countEl.textContent = 'н/д';
-  wrapEl.classList.add('offline');
-  console.warn('Presence count unavailable:', error);
-});
-      countEl.textContent = 'н/д';
-      wrapEl.classList.add('offline');
-      console.warn('Presence count unavailable:', error);
-    });
-    window.addEventListener('pagehide', () => { remove(myPresence).catch(() => {}); });
-  } catch (error) {
+try {
+  const [{ initializeApp }, {
+    getDatabase, ref, onValue, onDisconnect, set, remove
+  }] = await Promise.all([
+    import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js'),
+    import('https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js')
+  ]);
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  const connectedRef = ref(db, '.info/connected');
+  const presenceRoot = ref(db, 'presence');
+
+  const sessionId = crypto.randomUUID();
+  const myPresence = ref(db, `presence/${sessionId}`);
+
+  onValue(connectedRef, async snapshot => {
+    if (snapshot.val() === true) {
+      try {
+        await onDisconnect(myPresence).remove();
+        await set(myPresence, Date.now());
+      } catch (error) {
+        console.error('Presence registration:', error);
+      }
+    }
+  });
+
+  onValue(presenceRoot, snapshot => {
+    const data = snapshot.val();
+    const count = data ? Object.keys(data).length : 0;
+
+    countEl.textContent = count;
+    wrapEl.classList.remove('offline');
+  }, error => {
     countEl.textContent = 'н/д';
-    console.warn('Firebase presence unavailable:', error);
-  }
-} else {
-  countEl.textContent = 'налаштування';
+    wrapEl.classList.add('offline');
+    console.error(error);
+  });
+
+  window.addEventListener('pagehide', () => {
+    remove(myPresence).catch(() => {});
+  });
+
+} catch (error) {
+  countEl.textContent = 'н/д';
+  console.error('Firebase error:', error);
 }
-</script></body></html>
