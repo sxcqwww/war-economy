@@ -128,6 +128,7 @@ const firebaseConfig = {
 };
 
 console.log('WAR ECONOMY COUNTER SCRIPT STARTED');
+  console.log('BEFORE FIREBASE IMPORT');
   const countEl = document.getElementById('liveCount');
 const wrapEl = document.getElementById('liveCountWrap');
 
@@ -138,7 +139,7 @@ try {
     import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js'),
     import('https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js')
   ]);
-
+console.log('FIREBASE IMPORT SUCCESS');
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
